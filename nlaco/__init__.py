@@ -1,5 +1,4 @@
 import re
-from functools import reduce
 from typing import List, Set
 from uuid import uuid4
 
@@ -20,12 +19,7 @@ def get_card_contents(text: str, phrases_per_cloze=1) -> Set[str]:
     for i in range(phrases_per_cloze, len(phrases) + 1):
         p = phrases[i - phrases_per_cloze : i]
         assert len(p) == phrases_per_cloze, f"Problem!!! {p}"
-        multi_cloze_regex = reduce(
-            lambda prev, curr: prev + ".+?" + curr, p[1:], p[0]
-        )
-        retset.add(
-            re.sub(f"({multi_cloze_regex})", r"{{c1::\1}}", text, flags=re.DOTALL)
-        )
+        retset.add(re.sub(f"({'.+?'.join(p)})", r"{{c1::\1}}", text, flags=re.DOTALL))
 
     return retset
 
@@ -65,16 +59,18 @@ def create_anki_deck(text, deckname=None, filename=None):
         model_type=Model.CLOZE,
     )
 
-
     name_uuid = uuid4()
 
     for overlap in range(1, 4):
 
         notes = [
-            Note(model=MY_CLOZE_MODEL, fields=(p, "")) for p in get_card_contents(text, phrases_per_cloze=overlap)
+            Note(model=MY_CLOZE_MODEL, fields=(p, ""))
+            for p in get_card_contents(text, phrases_per_cloze=overlap)
         ]
         for n in notes:
-            assert n.cards, f"No cards in note {n}, this will cause your Anki DB to break!"
+            assert (
+                n.cards
+            ), f"No cards in note {n}, this will cause your Anki DB to break!"
 
         if deckname is None:
             _deckname = f"nlaco-overlap-{overlap}--" + str(name_uuid)
