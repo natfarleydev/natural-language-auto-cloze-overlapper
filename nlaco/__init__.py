@@ -81,6 +81,8 @@ def create_anki_deck(text, deckname=None, filename=None):
         else:
             raise NotImplementedError("Custom decknames are not supported yet :(")
 
+        # % 500000 to make sure the int can fit into an SQL database. TODO see
+        # whether this is random enough to make sure there are no collisions.
         deck = Deck(deck_id=name_uuid.int % 500000, name=_deckname)
         for note in notes:
             deck.add_note(note)
